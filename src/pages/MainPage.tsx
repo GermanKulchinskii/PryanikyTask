@@ -7,7 +7,7 @@ import ConfirmDeleteModal from '../components/ConfirmDeleteModal';
 import EditRecordModal from '../components/EditRecordModal';
 import NewRecordModal from "../components/NewRecordModal";
 import getColumns, { convertToISO, initialRecord, RecordType, validateFields } from "../helpers/TableHelpers";
-import { formatDate } from "../helpers/TableHelpers";
+import { formatDate, formatForInput } from "../helpers/TableHelpers";
 
 const MainPage = () => {
 	const [tableData, setTableData] = useState<RecordType[]>([]);
@@ -66,7 +66,11 @@ const MainPage = () => {
 	};
 
 	const handleEdit = (row: any) => {
-		setSelectedRow(row);
+		setSelectedRow({
+			...row,
+			companySigRuTime: formatForInput(row.companySigDate),
+			employeeSigRuTime: formatForInput(row.employeeSigDate)
+		});
 		setEditModal(true);
 	};
 
@@ -146,11 +150,25 @@ const MainPage = () => {
 
 	const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
 		const { name, value } = e.target;
+
+		if (name !== 'companySigRuTime' && name !== 'employeeSigRuTime' && value.length >= 30) {
+			setSnackbarMessage('Длина ввода не должна превышать 20 символов');
+			setSnackbarOpen(true);
+			return;
+		};
+
 		setNewRecord({ ...newRecord, [name]: value });
 	};
 
 	const handleEditInputChange = (e: ChangeEvent<HTMLInputElement>) => {
 		const { name, value } = e.target;
+
+		if (name !== 'companySigRuTime' && name !== 'employeeSigRuTime' && value.length >= 30) {
+			setSnackbarMessage('Длина ввода не должна превышать 20 символов');
+			setSnackbarOpen(true);
+			return;
+		};
+
 		setSelectedRow({ ...selectedRow, [name]: value });
 	};
 

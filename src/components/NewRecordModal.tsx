@@ -31,6 +31,13 @@ const NewRecordModal: React.FC<NewRecordModalProps> = ({ open, onClose, onSave, 
             onChange={handleInputChange}
             fullWidth
             margin="normal"
+            type="datetime-local"
+            InputLabelProps={{
+              shrink: true,
+            }}
+            inputProps={{
+              max: "9999-12-31T23:59"
+            }}
           />
           <TextField
             label="Имя подписи компании"
@@ -79,6 +86,13 @@ const NewRecordModal: React.FC<NewRecordModalProps> = ({ open, onClose, onSave, 
             onChange={handleInputChange}
             fullWidth
             margin="normal"
+            type="datetime-local"
+            InputLabelProps={{
+              shrink: true,
+            }}
+            inputProps={{
+              max: "9999-12-31T23:59",
+            }}
           />
           <TextField
             label="Имя подписи сотрудника"

@@ -3,13 +3,13 @@ import { Button } from '@mui/material';
 
 const getColumns = (handleEdit: (row: any) => void, handleDeleteModal: (row: any) => void): GridColDef[] => [
 	{ field: 'companySigRuTime', headerName: 'Дата подписи компании', width: 150 },
-	{ field: 'companySignatureName', headerName: 'Имя подписи компании', width: 170 },
+	{ field: 'companySignatureName', headerName: 'Подпись компании', width: 140 },
 	{ field: 'documentName', headerName: 'Название документа', width: 150 },
 	{ field: 'documentStatus', headerName: 'Статус документа', width: 150 },
 	{ field: 'documentType', headerName: 'Тип документа', width: 150 },
 	{ field: 'employeeNumber', headerName: '№ сотрудника', width: 120 },
 	{ field: 'employeeSigRuTime', headerName: 'Дата подписи сотрудника', width: 150 },
-	{ field: 'employeeSignatureName', headerName: 'Имя подписи сотрудника', width: 150 },
+	{ field: 'employeeSignatureName', headerName: 'Подпись сотрудника', width: 150 },
 	{
 		field: 'actions',
 		headerName: 'Действия',
@@ -51,43 +51,57 @@ export const initialRecord: RecordType = {
 	id: '',
 };
 
-export const formatDate = (isoString: string) => {
+export const formatDate = (isoString: string): string => {
 	const isoDate = new Date(isoString);
-	const ruDate = isoDate.toLocaleDateString('ru-RU', {
-		day: '2-digit',
-		month: '2-digit',
-		year: 'numeric',
-		timeZone: 'UTC'
-	});
-	const ruTime = isoDate.toLocaleTimeString('ru-RU', {
-		hour: '2-digit',
-		minute: '2-digit',
-		timeZone: 'UTC'
-	});
-	return `${ruDate} ${ruTime}`;
-}
+	const day = String(isoDate.getUTCDate()).padStart(2, '0');
+	const month = String(isoDate.getUTCMonth() + 1).padStart(2, '0');
+	const year = isoDate.getUTCFullYear();
+	const hours = String(isoDate.getUTCHours()).padStart(2, '0');
+	const minutes = String(isoDate.getUTCMinutes()).padStart(2, '0');
+	return `${day}.${month}.${year} ${hours}:${minutes}`;
+};
+
+export const formatForInput = (isoString: string): string => {
+	const isoDate = new Date(isoString);
+	const year = isoDate.getUTCFullYear();
+	const month = String(isoDate.getUTCMonth() + 1).padStart(2, '0');
+	const day = String(isoDate.getUTCDate()).padStart(2, '0');
+	const hours = String(isoDate.getUTCHours()).padStart(2, '0');
+	const minutes = String(isoDate.getUTCMinutes()).padStart(2, '0');
+	return `${year}-${month}-${day}T${hours}:${minutes}`;
+};
+  
 
 export const convertToISO = (dateTime: string): string => {
-	const [datePart, timePart] = dateTime.split(' ');
-	const [day, month, year] = datePart.split('.').map(Number);
+	const [datePart, timePart] = dateTime.split('T');
+	const [year, month, day] = datePart.split('-').map(Number);
 	const [hours, minutes] = timePart.split(':').map(Number);
 	const isoDate = new Date(Date.UTC(year, month - 1, day, hours, minutes));
 	return isoDate.toISOString();
-};
+};  
+
+
 
 export const validateFields = (record: RecordType, setSnackbarMessage: (message: string) => void, setSnackbarOpen: (open: boolean) => void): boolean => {
-	const dateRegex = /^\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}$/;
-	if (!record.companySigRuTime.match(dateRegex) || !record.employeeSigRuTime.match(dateRegex)) {
-		setSnackbarMessage("Неверный формат даты. Используйте формат: 12.12.2012 13:23");
-		setSnackbarOpen(true);
-		return false;
+	const minDate = new Date('1991-01-01T00:00');
+	const maxDate = new Date();
+	maxDate.setDate(maxDate.getDate() + 1);
+	const companySigDate = new Date(record.companySigRuTime);
+	const employeeSigDate = new Date(record.employeeSigRuTime);
+  
+	if (companySigDate < minDate || companySigDate > maxDate || employeeSigDate < minDate || employeeSigDate > maxDate) {
+	  setSnackbarMessage("Дата должна быть в диапазоне от 1991 года до завтрашнего дня.");
+	  setSnackbarOpen(true);
+	  return false;
 	}
+  
 	if (!record.companySignatureName || !record.documentName || !record.documentStatus || !record.documentType || !record.employeeNumber || !record.employeeSignatureName) {
-		setSnackbarMessage("Все поля должны быть заполнены.");
-		setSnackbarOpen(true);
-		return false;
+	  setSnackbarMessage("Все поля должны быть заполнены.");
+	  setSnackbarOpen(true);
+	  return false;
 	}
 	return true;
-};
+  };
+  
 
 export default getColumns;

@@ -15,6 +15,12 @@ const LoginPage: React.FC = () => {
   const handleInputChange = (event: ChangeEvent<HTMLInputElement>) => {
     const { id, value } = event.target;
 
+    if (value.length >= 30) {
+      setSnackbarMessage('Длина ввода не должна превышать 20 символов');
+      setOpenSnackbar(true);
+      return;
+    }
+
     setCredentials(prevValue => ({
       ...prevValue,
       [id]: value,
@@ -62,6 +68,7 @@ const LoginPage: React.FC = () => {
           variant='outlined'
           label="Введите логин"
           fullWidth
+          inputProps={{ maxLength: 30 }}
         />
         <TextField
           onChange={handleInputChange}
@@ -69,6 +76,8 @@ const LoginPage: React.FC = () => {
           variant='outlined'
           label="Введите пароль"
           fullWidth
+          type='password'
+          inputProps={{ maxLength: 30 }}
         />
         <Button
           type='submit'

@@ -1,27 +1,21 @@
-import { createBrowserRouter, RouterProvider, RouteObject } from "react-router-dom";
-import LoginPage from '../pages/LoginPage';
-import MainPage from "../pages/MainPage"
-import { UserProvider } from "../Context/useAuth";
-// import AuthGuard from '../components/AuthGuard';
-import App  from '../App'
+import { createBrowserRouter, RouteObject } from "react-router-dom";
+import { lazy } from 'react';
+import ErrorPage from "../pages/ErrorPage";
+
+const LoginPage = lazy(() => import('../pages/LoginPage'));
+const MainPage = lazy(() => import('../pages/MainPage'));
+const App = lazy(() => import('../App'));
 
 const routes: RouteObject[] = [
-    {
-        path: '/',
-        element: <App />,
-        children: [
-            { path: "", element: <MainPage/> },
-            { path: 'login', element: <LoginPage />}
-        ]
-    }
+	{
+		path: '/',
+		element: <App />,
+		errorElement: <ErrorPage />,
+		children: [
+			{ path: "", element: <MainPage /> },
+			{ path: 'login', element: <LoginPage /> }
+		]
+	}
 ];
 
 export const router = createBrowserRouter(routes);
-
-// const AppProvider: React.FC = ({children}: ) => {
-//     return (
-//         <RouterProvider router={router} />
-//     );
-// }
-
-// export default AppProvider;

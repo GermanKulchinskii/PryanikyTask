@@ -1,75 +1,207 @@
-import { useEffect, useState } from "react";
+import { ChangeEvent, useEffect, useState } from "react";
 import DocsService from "../API/DocsService";
 import { DataGrid } from "@mui/x-data-grid";
-import { Paper, Button } from "@mui/material";
+import { Paper, Button, Snackbar, Alert, CircularProgress, Backdrop } from "@mui/material";
+import { useAuth } from "../Context/useAuth";
+import ConfirmDeleteModal from '../components/ConfirmDeleteModal';
+import EditRecordModal from '../components/EditRecordModal';
+import NewRecordModal from "../components/NewRecordModal";
+import getColumns, { convertToISO, initialRecord, RecordType, validateFields } from "../helpers/TableHelpers";
+import { formatDate } from "../helpers/TableHelpers";
 
 const MainPage = () => {
-    const [tableData, setTableData] = useState([]);
-    const paginationModel = { page: 0, pageSize: 5 };
-    
-    useEffect(() => {
-        const getData = async () => {
-            const resp = await DocsService.getDocs();
-            if (resp.data?.data) {
-                setTableData(resp.data.data);
-            }
-        };
+	const [tableData, setTableData] = useState<RecordType[]>([]);
+	const paginationModel = { page: 0, pageSize: 5 };
+	const { isLoggedIn, logout } = useAuth();
+	const [addModal, setAddModal] = useState<boolean>(false);
+	const [deleteModal, setDeleteModal] = useState<boolean>(false);
+	const [editModal, setEditModal] = useState<boolean>(false);
+	const [selectedRow, setSelectedRow] = useState<RecordType>(initialRecord);
+	const [newRecord, setNewRecord] = useState<RecordType>(initialRecord);
+	const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
+	const [snackbarMessage, setSnackbarMessage] = useState<string>("");
+	const [loading, setLoading] = useState<boolean>(false);
 
-        getData();
-    }, []);
+	useEffect(() => {
+		isLoggedIn();
 
-    const handleDelete = () => {
-        console.log(1);
-        // Логика удаления записи
-    };
+		const getData = async () => {
+			setLoading(true);
+			try {
+				const resp = await DocsService.getDocs();
+				if (resp.data?.data) {
+					const formattedData = resp.data.data.map((record: RecordType) => ({
+						...record,
+						companySigRuTime: formatDate(record.companySigDate),
+						employeeSigRuTime: formatDate(record.employeeSigDate)
+					}));
+					setTableData(formattedData);
+				}
+			} catch (error) {
+				setSnackbarMessage("Произошла ошибка. Попробуйте позже.");
+				setSnackbarOpen(true);
+			} finally {
+				setLoading(false);
+			};
+		};
+		getData();
+	}, []);
 
-    const handleEdit = () => {
-        console.log(2);
-        // Логика редактирования записи
-    };
+	const handleLogout = () => {
+		logout();
+	};
 
-    const handleAdd = () => {
-        console.log(3);
-        // Логика добавления новой записи
-    };
+	const handleDelete = async () => {
+		setLoading(true);
+		try {
+			await DocsService.deleteRecord(selectedRow.id);
+			setTableData(tableData!.filter(row => row.id !== selectedRow.id));
+			handleDeleteClose();
+		} catch (error) {
+			setSnackbarMessage("Произошла ошибка. Попробуйте позже.");
+			setSnackbarOpen(true);
+		} finally {
+			setLoading(false);
+		}
+	};
 
-    const columns = [
-        { field: 'companySigDate', headerName: 'Company Sig Date', width: 150 },
-        { field: 'companySignatureName', headerName: 'Company Signature Name', width: 200 },
-        { field: 'documentName', headerName: 'Document Name', width: 150 },
-        { field: 'documentStatus', headerName: 'Document Status', width: 150 },
-        { field: 'documentType', headerName: 'Document Type', width: 150 },
-        { field: 'employeeNumber', headerName: 'Employee Number', width: 120 },
-        { field: 'employeeSigDate', headerName: 'Employee Sig Date', width: 150 },
-        { field: 'employeeSignatureName', headerName: 'Employee Signature Name', width: 120 },
-        {
-            field: 'actions',
-            headerName: 'Actions',
-            width: 150,
-            renderCell: () => (
-                <div>
-                    <Button onClick={() => handleEdit()}>Edit</Button>
-                    <Button onClick={() => handleDelete()}>Delete</Button>
-                </div>
-            ),
-        },
-    ];
+	const handleEdit = (row: any) => {
+		setSelectedRow(row);
+		setEditModal(true);
+	};
 
-    return (
-        <Paper style={{ height: 400, width: '100%' }}>
-            <Button onClick={handleAdd}>Add New Record</Button>
-            <DataGrid 
-                rows={tableData} 
-                columns={columns} 
-                initialState={{ pagination: { paginationModel } }} 
-                pageSizeOptions={[5, 10]} 
-                sx={{ border: 0 }} 
-                // checkboxSelection 
-                // disableMultipleRowSelection={true}
-                // disableSelectionOnClick 
-            />
-        </Paper>
-    );
+	const handleEditClose = () => setEditModal(false);
+
+	const handleEditSave = async () => {
+		setLoading(true);
+		try {
+			if (!validateFields(selectedRow, setSnackbarMessage, setSnackbarOpen)) return;
+			const { companySignatureName, documentName, documentStatus, documentType, employeeNumber, employeeSignatureName } = selectedRow;
+			const updatedISORecord = {
+				companySignatureName,
+				documentName,
+				documentStatus,
+				documentType,
+				employeeNumber,
+				employeeSignatureName,
+				companySigDate: convertToISO(selectedRow.companySigRuTime),
+				employeeSigDate: convertToISO(selectedRow.employeeSigRuTime),
+			};
+			const response = await DocsService.setRecord(selectedRow.id, updatedISORecord);
+			const updatedFullRecord = {
+				...response.data.data,
+				companySigRuTime: formatDate(response.data.data.companySigDate),
+				employeeSigRuTime: formatDate(response.data.data.employeeSigDate)
+			};
+			setTableData(tableData!.map(row => (row.id === selectedRow.id ? updatedFullRecord : row)));
+			handleEditClose();
+		} catch (error) {
+			setSnackbarMessage("Произошла ошибка. Попробуйте позже.");
+			setSnackbarOpen(true);
+		} finally {
+			setLoading(false);
+		};
+	};
+
+	const handleAddModal = () => setAddModal(true);
+	const handleAddClose = () => setAddModal(false);
+
+	const handleDeleteModal = (row: RecordType) => {
+		setSelectedRow(row);
+		setDeleteModal(true);
+	};
+
+	const handleDeleteClose = () => setDeleteModal(false);
+
+	const handleAdd = async () => {
+		setLoading(true);
+		try {
+			if (!validateFields(newRecord, setSnackbarMessage, setSnackbarOpen)) return;
+			const { companySignatureName, documentName, documentStatus, documentType, employeeNumber, employeeSignatureName } = newRecord;
+			const newISORecord = {
+				companySignatureName,
+				documentName,
+				documentStatus,
+				documentType,
+				employeeNumber,
+				employeeSignatureName,
+				companySigDate: convertToISO(newRecord.companySigRuTime),
+				employeeSigDate: convertToISO(newRecord.employeeSigRuTime),
+			};
+			const response = await DocsService.postRecord(newISORecord);
+			const formattedRecord = {
+				...response.data.data,
+				companySigRuTime: formatDate(response.data.data.companySigDate),
+				employeeSigRuTime: formatDate(response.data.data.employeeSigDate)
+			};
+			setTableData([...(tableData ?? []), { id: (tableData?.length ?? 0) + 1, ...formattedRecord }]);
+			handleAddClose();
+		} catch (error) {
+			setSnackbarMessage("Произошла ошибка. Попробуйте позже.");
+			setSnackbarOpen(true);
+		} finally {
+			setLoading(false);
+		};
+	};
+
+	const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
+		const { name, value } = e.target;
+		setNewRecord({ ...newRecord, [name]: value });
+	};
+
+	const handleEditInputChange = (e: ChangeEvent<HTMLInputElement>) => {
+		const { name, value } = e.target;
+		setSelectedRow({ ...selectedRow, [name]: value });
+	};
+
+	const handleSnackbarClose = () => {
+		setSnackbarOpen(false);
+	};
+
+	return (
+		<div>
+			<Paper style={{ height: "100%", width: '100%' }}>
+				<div className="flex gap-10">
+					<Button onClick={handleAddModal}>Добавить запись</Button>
+					<Button onClick={handleLogout}>Выйти</Button>
+				</div>
+				<DataGrid
+					rows={tableData}
+					columns={getColumns(handleEdit, handleDeleteModal)}
+					initialState={{ pagination: { paginationModel } }}
+					pageSizeOptions={[5, 10, 20]}
+					sx={{ border: 0 }}
+				/>
+			</Paper>
+			<NewRecordModal
+				open={addModal}
+				onClose={handleAddClose}
+				onSave={handleAdd}
+				record={newRecord}
+				handleInputChange={handleInputChange}
+			/>
+			<ConfirmDeleteModal
+				open={deleteModal}
+				onClose={handleDeleteClose}
+				onConfirm={handleDelete}
+			/>
+			<EditRecordModal
+				open={editModal}
+				onClose={handleEditClose}
+				onSave={handleEditSave}
+				record={selectedRow}
+				handleInputChange={handleEditInputChange}
+			/>
+			<Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={handleSnackbarClose}>
+				<Alert onClose={handleSnackbarClose} severity="error" sx={{ width: '100%' }}>
+					{snackbarMessage}
+				</Alert>
+			</Snackbar>
+			<Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={loading}>
+				<CircularProgress color="inherit" />
+			</Backdrop>
+		</div>
+	);
 };
 
 export default MainPage;

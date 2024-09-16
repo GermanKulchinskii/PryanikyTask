@@ -10,21 +10,18 @@ const addToken = (config: InternalAxiosRequestConfig): InternalAxiosRequestConfi
     if (token) {
         const tokenValue = token.split('=')[1];
         (config.headers as AxiosRequestHeaders)['x-auth'] = tokenValue;
-    }
-    
+    };
+
     return config;
 };
 
-
 $authApi.interceptors.request.use(
     (config) => {
-        // console.log('Request Interceptor:', config);
         return addToken(config);
     },
     (error) => {
         return Promise.reject(error);
     }
 );
-
 
 export default $authApi;

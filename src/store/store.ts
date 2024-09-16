@@ -1,17 +1,11 @@
-import { configureStore } from '@reduxjs/toolkit';
-import authReducer from './slices/authSlice';
+import { createStore, applyMiddleware, Store, AnyAction } from 'redux';
+import thunk, { ThunkMiddleware } from 'redux-thunk';
+import { rootReducer, RootState } from './rootReducer';
 
-const store = configureStore({
-  reducer: {
-    auth: authReducer,
-  },
-});
 
-export type RootState = ReturnType<typeof store.getState>;
-export type AppDispatch = typeof store.dispatch;
+const store: Store<RootState, AnyAction> = createStore(
+  rootReducer,
+  applyMiddleware(thunk as unknown as ThunkMiddleware<RootState, AnyAction>)
+);
 
 export default store;
-export function dispatch() {
-    throw new Error("Function not implemented.");
-}
-

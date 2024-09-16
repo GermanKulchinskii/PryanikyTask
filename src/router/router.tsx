@@ -1,29 +1,27 @@
 import { createBrowserRouter, RouterProvider, RouteObject } from "react-router-dom";
 import LoginPage from '../pages/LoginPage';
 import MainPage from "../pages/MainPage"
-import AuthGuard from '../components/AuthGuard';
+import { UserProvider } from "../Context/useAuth";
+// import AuthGuard from '../components/AuthGuard';
+import App  from '../App'
 
 const routes: RouteObject[] = [
     {
-        path: '/login',
-        element: <LoginPage />,
-    },
-    {
         path: '/',
-        element: (
-            <AuthGuard>
-                <MainPage />
-            </AuthGuard>
-        ),
-    },
+        element: <App />,
+        children: [
+            { path: "", element: <MainPage/> },
+            { path: 'login', element: <LoginPage />}
+        ]
+    }
 ];
 
-const router = createBrowserRouter(routes);
+export const router = createBrowserRouter(routes);
 
-const AppProvider: React.FC = () => {
-    return (
-        <RouterProvider router={router} />
-    );
-}
+// const AppProvider: React.FC = ({children}: ) => {
+//     return (
+//         <RouterProvider router={router} />
+//     );
+// }
 
-export default AppProvider;
+// export default AppProvider;

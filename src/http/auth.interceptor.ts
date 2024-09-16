@@ -11,7 +11,7 @@ const addToken = (config: InternalAxiosRequestConfig): InternalAxiosRequestConfi
         const tokenValue = token.split('=')[1];
         (config.headers as AxiosRequestHeaders)['x-auth'] = tokenValue;
     }
-
+    
     return config;
 };
 

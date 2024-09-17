@@ -16,7 +16,7 @@ const LoginPage: React.FC = () => {
     const { id, value } = event.target;
 
     if (value.length >= 30) {
-      setSnackbarMessage('Длина ввода не должна превышать 20 символов');
+      setSnackbarMessage('Длина ввода не должна превышать 30 символов');
       setOpenSnackbar(true);
       return;
     }

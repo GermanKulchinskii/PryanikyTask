@@ -151,8 +151,8 @@ const MainPage = () => {
 	const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
 		const { name, value } = e.target;
 
-		if (name !== 'companySigRuTime' && name !== 'employeeSigRuTime' && value.length >= 30) {
-			setSnackbarMessage('Длина ввода не должна превышать 20 символов');
+		if (name !== 'companySigRuTime' && name !== 'employeeSigRuTime' && value.length > 30) {
+			setSnackbarMessage('Длина ввода не должна превышать 30 символов');
 			setSnackbarOpen(true);
 			return;
 		};
@@ -163,8 +163,8 @@ const MainPage = () => {
 	const handleEditInputChange = (e: ChangeEvent<HTMLInputElement>) => {
 		const { name, value } = e.target;
 
-		if (name !== 'companySigRuTime' && name !== 'employeeSigRuTime' && value.length >= 30) {
-			setSnackbarMessage('Длина ввода не должна превышать 20 символов');
+		if (name !== 'companySigRuTime' && name !== 'employeeSigRuTime' && value.length > 30) {
+			setSnackbarMessage('Длина ввода не должна превышать 30 символов');
 			setSnackbarOpen(true);
 			return;
 		};

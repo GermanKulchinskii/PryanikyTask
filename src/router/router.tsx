@@ -18,6 +18,4 @@ const routes: RouteObject[] = [
 	}
 ];
 
-export const router = createBrowserRouter(routes, {
-	basename: '/PryanikyTask'
-});
+export const router = createBrowserRouter(routes);
